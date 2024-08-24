@@ -1,8 +1,7 @@
 import torch
-from pytorch_lightning.metrics import Metric
+import torchmetrics
 
-
-class Accuracy(Metric):
+class Accuracy(torchmetrics.Metric):
     def __init__(self, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
         self.add_state("correct", default=torch.tensor(0.0), dist_reduce_fx="sum")
@@ -17,7 +16,7 @@ class Accuracy(Metric):
         preds = preds[target != -100]
         target = target[target != -100]
         if target.numel() == 0:
-            return 1
+            return
 
         assert preds.shape == target.shape
 
@@ -28,7 +27,7 @@ class Accuracy(Metric):
         return self.correct / self.total
 
 
-class Scalar(Metric):
+class Scalar(torchmetrics.Metric):
     def __init__(self, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
         self.add_state("scalar", default=torch.tensor(0.0), dist_reduce_fx="sum")
@@ -46,7 +45,7 @@ class Scalar(Metric):
         return self.scalar / self.total
 
 
-class VQAScore(Metric):
+class VQAScore(torchmetrics.Metric):
     def __init__(self, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
         self.add_state("score", default=torch.tensor(0.0), dist_reduce_fx="sum")
@@ -58,12 +57,12 @@ class VQAScore(Metric):
             target.detach().float().to(self.score.device),
         )
         logits = torch.max(logits, 1)[1]
-        one_hots = torch.zeros(*target.size()).to(target)
+        one_hots = torch.zeros_like(target).to(target.device)
         one_hots.scatter_(1, logits.view(-1, 1), 1)
         scores = one_hots * target
 
         self.score += scores.sum()
-        self.total += len(logits)
+        self.total += logits.size(0)
 
     def compute(self):
         return self.score / self.total

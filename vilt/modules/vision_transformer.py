@@ -594,6 +594,7 @@ class VisionTransformer(nn.Module):
             .expand(x_mask.shape[0], x_mask.shape[1], -1, -1, -1)
             .flatten(1, 3)
         )
+        patch_index = patch_index.to("cuda")
         x_mask = x_mask.flatten(1)
 
         if mask_it:
@@ -641,6 +642,7 @@ class VisionTransformer(nn.Module):
                     )
                 )
 
+        #select = select.to("cuda")
         select = torch.cat(select, dim=0)
         x = x[select[:, 0], select[:, 1]].view(B, -1, C)
         x_mask = x_mask[select[:, 0], select[:, 1]].view(B, -1)

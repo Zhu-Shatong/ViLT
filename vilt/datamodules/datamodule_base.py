@@ -8,16 +8,17 @@ from transformers import (
     BertTokenizer,
 )
 
+BERT_PATH = '/home/autolab/zhushatong/others/bert'
 
 def get_pretrained_tokenizer(from_pretrained):
     if torch.distributed.is_initialized():
         if torch.distributed.get_rank() == 0:
             BertTokenizer.from_pretrained(
-                from_pretrained, do_lower_case="uncased" in from_pretrained
+                BERT_PATH, do_lower_case="uncased" in from_pretrained, local_files_only=True
             )
         torch.distributed.barrier()
     return BertTokenizer.from_pretrained(
-        from_pretrained, do_lower_case="uncased" in from_pretrained
+        BERT_PATH, do_lower_case="uncased" in from_pretrained, local_files_only=True
     )
 
 
